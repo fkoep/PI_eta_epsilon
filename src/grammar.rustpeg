@@ -1,0 +1,48 @@
+use super::*;
+
+sp1 -> () = " "+
+sp0 -> () = sp1?
+
+ident -> String 
+    = s:$([a-zA-Z_][a-zA-Z0-9_]*) { s.into() }
+
+val0 -> Val
+    = "()" { Val::Unit }
+    / "left" sp1 v:val { Val::Left(box v) }
+    / "right" sp1 v:val { Val::Right(box v) }
+    / "-" sp0 v:val { Val::Neg(box v) }
+    / "/" sp0 v:val { Val::Frac(box v) }
+    / "'" i:ident { Val::Symbol(i) }
+    / "(" sp0 v:val sp0 ")" { v }
+
+pub val -> Val
+    = v1:val0 sp0 "," sp0 v2:val { Val::Pair(box v1, box v2) }
+    / v:val0 { v }
+
+iso -> Iso
+    = "swap+" { Iso::SwapS }
+    / "assocl+" { Iso::AssoclS }
+    / "assocr+" { Iso::AssocrS }
+    / "unite" { Iso::Unite }
+    / "uniti" { Iso::Uniti }
+    / "swap*" { Iso::SwapP }
+    / "assocl*" { Iso::AssoclP }
+    / "assocr*" { Iso::AssocrP }
+    / "distrib" { Iso::Distrib }
+    / "factor" { Iso::Factor }
+    / "eta+" { Iso::EtaS }
+    / "epsilon+" { Iso::EpsilonS }
+    / "eta*" { Iso::EtaP }
+    / "epsilon*" { Iso::EpsilonP }
+
+comb0 -> Comb 
+    = i:iso { Comb::Iso(i) }
+    / "id" { Comb::Id }
+    / "(" sp0 c:comb sp0 ")" { c }
+
+pub comb -> Comb
+    = c1:comb0 sp0 ";" sp0 c2:comb { Comb::Seq(box c1, box c2) }
+    / c1:comb0 sp0 "+" sp0 c2:comb { Comb::Sum(box c1, box c2) }
+    / c1:comb0 sp0 "*" sp0 c2:comb { Comb::Prod(box c1, box c2) }
+    / c:comb0 { c }
+
